@@ -5,7 +5,22 @@ class Boid {
         this.velocity = p5.Vector.random2D();
         this.velocity.setMag(random(1, 2));
         this.acceleration = createVector();
+        this.maxForce = 0.1;
+    }
 
+    edges() {
+        if (this.position.x > width) {
+            this.position.x = 0;
+        }
+        else if (this.position.x < 0) {
+            this.position.x = width;
+        }
+        if (this.position.y > height) {
+            this.position.y = 0;
+        }
+        else if (this.position.y < 0) {
+            this.position.y = height;
+        }
     }
 
     // function to align boids with nearby other boids
@@ -33,6 +48,8 @@ class Boid {
             steerVel.div(total);
             // subtract current velocity from steering
             steerVel.sub(this.velocity);
+            // limit amount velocity can change by max force
+            steerVel.limit(this.maxForce);
         }
         return steerVel;
     }
