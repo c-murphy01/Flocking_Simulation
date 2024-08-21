@@ -18,6 +18,7 @@ function draw() {
 
     // for each boid in flock, call show func
     for(let boid of flock) {
+        boid.flock(flock);
         boid.update();
         boid.show();
     }

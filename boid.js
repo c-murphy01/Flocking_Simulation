@@ -1,19 +1,45 @@
 class Boid {
     // constructor for each boid
     constructor() {
-        this.position = createVector(width/2, height/2);
+        this.position = createVector(random(width), random(height));
         this.velocity = p5.Vector.random2D();
-        this.velocity.setMag(random(0.5,1.5));
+        this.velocity.setMag(random(1, 2));
         this.acceleration = createVector();
 
     }
 
     // function to align boids with nearby other boids
     align(boids) {
-        let avg = createVector();
+        // variable for perception distance
+        let perception = 30;
+        // create variable for steer velocity
+        let steerVel = createVector();
+        // variable for total boids within range
+        let total = 0;
+        // for each other boid within perception range
         for (let other of boids) {
-            avg.add(other.velocity);
+            // get distance between this boid and other
+            let d = dist(this.position.x, this.position.y, other.position.x, other.position.y);
+            // if within range and not itself
+            if (other != this && d < perception) {
+                // add its velocity to steering
+                steerVel.add(other.velocity);
+                total++;
+            }
         }
+        if (total > 0) {
+            // divide steering velocity by number of other boids within range to get average velocity of flock
+            // this is the direction we want boid to turn to
+            steerVel.div(total);
+            // subtract current velocity from steering
+            steerVel.sub(this.velocity);
+        }
+        return steerVel;
+    }
+
+    flock(boids) {
+        let alignment = this.align(boids);
+        this.acceleration = alignment;
     }
 
     update() {
@@ -26,7 +52,7 @@ class Boid {
     // show function
     show() {
         // set stroke weight and color
-        strokeWeight(16);
+        strokeWeight(8);
         stroke(255);
         // place at boids position
         point(this.position.x, this.position.y);
