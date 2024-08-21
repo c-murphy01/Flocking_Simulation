@@ -6,6 +6,7 @@ class Boid {
         this.velocity.setMag(random(1, 2));
         this.acceleration = createVector();
         this.maxForce = 0.1;
+        this.maxSpeed = 3;
     }
 
     edges() {
@@ -46,6 +47,8 @@ class Boid {
             // divide steering velocity by number of other boids within range to get average velocity of flock
             // this is the direction we want boid to turn to
             steerVel.div(total);
+            // set magnitude of boid to max so it changes direction without losing speed
+            steerVel.setMag(this.velocity.mag());
             // subtract current velocity from steering
             steerVel.sub(this.velocity);
             // limit amount velocity can change by max force
