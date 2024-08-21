@@ -5,7 +5,7 @@ class Boid {
         this.velocity = p5.Vector.random2D();
         this.velocity.setMag(random(1, 2));
         this.acceleration = createVector();
-        this.maxForce = 0.1;
+        this.maxForce = 0.2;
         this.maxSpeed = 3;
     }
 
@@ -91,11 +91,47 @@ class Boid {
         return steerDir;
     }
 
+    separation(boids) {
+        // variable for perception distance
+        let perception = 30;
+        // create variable for steer direction
+        let steerDir = createVector();
+        // variable for total boids within range
+        let total = 0;
+        // for each other boid within perception range
+        for (let other of boids) {
+            // get distance between this boid and other
+            let d = dist(this.position.x, this.position.y, other.position.x, other.position.y);
+            // if within range and not itself
+            if (other != this && d < perception) {
+                let diff = p5.Vector.sub(this.position, other.position);
+                diff.div(d);
+                // add its position to steering
+                steerDir.add(diff);
+                total++;
+            }
+        }
+        if (total > 0) {
+            // divide steering direction by number of other boids within range to get average posiiton of flock
+            // this is the direction we want boid to turn to
+            steerDir.div(total);
+            // set magnitude of boid to maxspeed so it changes direction without losing speed
+            steerDir.setMag(this.maxSpeed);
+            // subtract current velocity from steering
+            steerDir.sub(this.velocity);
+            // limit amount velocity can change by max force
+            steerDir.limit(this.maxForce);
+        }
+        return steerDir;
+    }
+
     flock(boids) {
         let alignment = this.align(boids);
         let cohesion = this.cohesion(boids);
+        let separation = this.separation(boids);
         this.acceleration.add(alignment);
         this.acceleration.add(cohesion);
+        this.acceleration.add(separation);
     }
 
     update() {
