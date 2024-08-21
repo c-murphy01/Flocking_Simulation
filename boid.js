@@ -47,8 +47,8 @@ class Boid {
             // divide steering velocity by number of other boids within range to get average velocity of flock
             // this is the direction we want boid to turn to
             steerVel.div(total);
-            // set magnitude of boid to max so it changes direction without losing speed
-            steerVel.setMag(this.velocity.mag());
+            // set magnitude of boid to maxspeed so it changes direction without losing speed
+            steerVel.setMag(this.maxSpeed);
             // subtract current velocity from steering
             steerVel.sub(this.velocity);
             // limit amount velocity can change by max force
@@ -57,9 +57,45 @@ class Boid {
         return steerVel;
     }
 
+    cohesion(boids) {
+        // variable for perception distance
+        let perception = 30;
+        // create variable for steer direction
+        let steerDir = createVector();
+        // variable for total boids within range
+        let total = 0;
+        // for each other boid within perception range
+        for (let other of boids) {
+            // get distance between this boid and other
+            let d = dist(this.position.x, this.position.y, other.position.x, other.position.y);
+            // if within range and not itself
+            if (other != this && d < perception) {
+                // add its position to steering
+                steerDir.add(other.position);
+                total++;
+            }
+        }
+        if (total > 0) {
+            // divide steering direction by number of other boids within range to get average posiiton of flock
+            // this is the direction we want boid to turn to
+            steerDir.div(total);
+            // subtract current position from steering
+            steerDir.sub(this.position);
+            // set magnitude of boid to maxspeed so it changes direction without losing speed
+            steerDir.setMag(this.maxSpeed);
+            // subtract current velocity from steering
+            steerDir.sub(this.velocity);
+            // limit amount velocity can change by max force
+            steerDir.limit(this.maxForce);
+        }
+        return steerDir;
+    }
+
     flock(boids) {
         let alignment = this.align(boids);
-        this.acceleration = alignment;
+        let cohesion = this.cohesion(boids);
+        this.acceleration.add(alignment);
+        this.acceleration.add(cohesion);
     }
 
     update() {
@@ -67,6 +103,10 @@ class Boid {
         this.position.add(this.velocity);
         // velocity is updated by adding acceleration
         this.velocity.add(this.acceleration);
+        // limit velocity to max speed
+        this.velocity.limit(this.maxSpeed);
+        //reset acceleration so it doesn't accumulate over time
+        this.acceleration.mult(0);
     }
 
     // show function
