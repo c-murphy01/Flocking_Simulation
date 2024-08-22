@@ -7,6 +7,14 @@ class Boid {
         this.acceleration = createVector();
         this.maxForce = 0.2;
         this.maxSpeed = 3;
+
+        this.alignmentPerception = 50;
+        this.cohesionPerception = 50;
+        this.separationPerception = 25;
+
+        this.alignmentWeight = 0.5;
+        this.cohesionWeight = 0.5;
+        this.separationWeight = 0.5;
     }
 
     edges() {
@@ -24,8 +32,64 @@ class Boid {
         }
     }
 
+    applyRule(boids, perception, type) {
+        // create variable for steer velocity
+        let steering = createVector();
+        // variable for total boids within range
+        let total = 0;
+        // for each other boid within perception range
+        for (let other of boids) {
+            // get distance between this boid and other
+            let d = dist(this.position.x, this.position.y, other.position.x, other.position.y);
+            // if within range and not itself
+            if (other != this && d < perception) {
+                //depending on type
+                if (type == 'alignment') {
+                    steering.add(other.velocity);
+                }
+                else if (type == 'cohesion') {
+                    steering.add(other.position);
+                }
+                else if (type == 'separation') {
+                    let diff = p5.Vector.sub(this.position, other.position);
+                    diff.div(d);
+                    // add its position to steering
+                    steering.add(diff);
+                }
+                total++;
+            }
+        }
+        if (total > 0) {
+            // divide steering velocity by number of other boids within range to get average velocity of flock
+            // this is the direction we want boid to turn to
+            steering.div(total);
+            if (type == 'cohesion') {
+                steering.sub(this.position);
+            }
+            // set magnitude of boid to maxspeed so it changes direction without losing speed
+            steering.setMag(this.maxSpeed);
+            // subtract current velocity from steering
+            steering.sub(this.velocity);
+            // limit amount velocity can change by max force
+            steering.limit(this.maxForce);
+        }
+        return steering;
+    }
+
+    align(boids){
+        return this.applyRule(boids, this.alignmentPerception, 'alignment');
+    }
+
+    cohesion(boids){
+        return this.applyRule(boids, this.cohesionPerception, 'cohesion');
+    }
+
+    separation(boids){
+        return this.applyRule(boids, this.separationPerception, 'separation');
+    }
+/*
     // function to align boids with nearby other boids
-    align(boids) {
+    align(boids) { 
         // variable for perception distance
         let perception = 30;
         // create variable for steer velocity
@@ -58,6 +122,7 @@ class Boid {
     }
 
     cohesion(boids) {
+        /*
         // variable for perception distance
         let perception = 30;
         // create variable for steer direction
@@ -124,11 +189,12 @@ class Boid {
         }
         return steerDir;
     }
+*/
 
     flock(boids) {
-        let alignment = this.align(boids);
-        let cohesion = this.cohesion(boids);
-        let separation = this.separation(boids);
+        let alignment = this.align(boids).mult(this.alignmentWeight);
+        let cohesion = this.cohesion(boids).mult(this.cohesionWeight);
+        let separation = this.separation(boids).mult(this.separationWeight);
         this.acceleration.add(alignment);
         this.acceleration.add(cohesion);
         this.acceleration.add(separation);
